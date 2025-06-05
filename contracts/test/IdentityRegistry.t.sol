@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.26;4
 
 import "../src/IdentityRegistry.sol";
 
@@ -49,7 +49,10 @@ contract IdentityRegistryTest {
         require(id.exists, "not registered");
         require(id.passkeyHash == passkey, "passkey mismatch");
         require(id.emailHash == email, "email mismatch");
-        require(keccak256(bytes(id.metadata)) == keccak256(bytes(metadata)), "metadata mismatch");
+        require(
+            keccak256(bytes(id.metadata)) == keccak256(bytes(metadata)),
+            "metadata mismatch"
+        );
         require(!id.revoked, "revoked");
     }
 
@@ -59,11 +62,20 @@ contract IdentityRegistryTest {
         bytes32 newPass = keccak256(abi.encodePacked("newpass"));
         bytes32 newEmail = keccak256(abi.encodePacked("newemail"));
         string memory newMetadata = "new";
-        entryPoint.updateMetadata(registry, user, newPass, newEmail, newMetadata);
+        entryPoint.updateMetadata(
+            registry,
+            user,
+            newPass,
+            newEmail,
+            newMetadata
+        );
         IdentityRegistry.Identity memory id = registry.getIdentity(user);
         require(id.passkeyHash == newPass, "passkey mismatch");
         require(id.emailHash == newEmail, "email mismatch");
-        require(keccak256(bytes(id.metadata)) == keccak256(bytes(newMetadata)), "metadata mismatch");
+        require(
+            keccak256(bytes(id.metadata)) == keccak256(bytes(newMetadata)),
+            "metadata mismatch"
+        );
     }
 
     function testRevoke() public {
@@ -74,4 +86,3 @@ contract IdentityRegistryTest {
         require(id.revoked, "not revoked");
     }
 }
-

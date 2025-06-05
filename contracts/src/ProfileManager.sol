@@ -1,8 +1,12 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
 interface IEAS {
-    function attest(bytes32 schema, address recipient, bytes calldata data) external returns (bytes32);
+    function attest(
+        bytes32 schema,
+        address recipient,
+        bytes calldata data
+    ) external returns (bytes32);
 }
 
 contract ProfileManager {
@@ -22,7 +26,12 @@ contract ProfileManager {
 
     mapping(address => Profile) private profiles;
 
-    event ProfileUpdated(address indexed user, string handle, string cid, bytes32 attestationUID);
+    event ProfileUpdated(
+        address indexed user,
+        string handle,
+        string cid,
+        bytes32 attestationUID
+    );
     event PreferencesAttested(address indexed user, bytes32 attestationUID);
     event VerificationAttested(address indexed user, bytes32 attestationUID);
     event SafetySignalAttested(address indexed user, bytes32 attestationUID);
@@ -58,19 +67,26 @@ contract ProfileManager {
         emit ModeratorUpdated(moderator, enabled);
     }
 
-    function setProfile(string calldata handle, string calldata cid) external returns (bytes32) {
+    function setProfile(
+        string calldata handle,
+        string calldata cid
+    ) external returns (bytes32) {
         return _setProfile(msg.sender, handle, cid);
     }
 
-    function setProfileFor(address user, string calldata handle, string calldata cid)
-        external
-        onlyAuthorized(user)
-        returns (bytes32)
-    {
+    function setProfileFor(
+        address user,
+        string calldata handle,
+        string calldata cid
+    ) external onlyAuthorized(user) returns (bytes32) {
         return _setProfile(user, handle, cid);
     }
 
-    function _setProfile(address user, string calldata handle, string calldata cid) internal returns (bytes32 uid) {
+    function _setProfile(
+        address user,
+        string calldata handle,
+        string calldata cid
+    ) internal returns (bytes32 uid) {
         profiles[user] = Profile({handle: handle, cid: cid});
         uid = eas.attest(profileSchema, user, abi.encode(handle, cid));
         emit ProfileUpdated(user, handle, cid, uid);
@@ -80,23 +96,25 @@ contract ProfileManager {
         return profiles[user];
     }
 
-    function attestPreferences(bytes calldata data) external returns (bytes32 uid) {
+    function attestPreferences(
+        bytes calldata data
+    ) external returns (bytes32 uid) {
         uid = eas.attest(preferencesSchema, msg.sender, data);
         emit PreferencesAttested(msg.sender, uid);
     }
 
-    function attestVerification(bytes calldata data) external returns (bytes32 uid) {
+    function attestVerification(
+        bytes calldata data
+    ) external returns (bytes32 uid) {
         uid = eas.attest(verificationSchema, msg.sender, data);
         emit VerificationAttested(msg.sender, uid);
     }
 
-    function attestSafetySignal(address user, bytes calldata data)
-        external
-        onlyAuthorized(user)
-        returns (bytes32 uid)
-    {
+    function attestSafetySignal(
+        address user,
+        bytes calldata data
+    ) external onlyAuthorized(user) returns (bytes32 uid) {
         uid = eas.attest(safetySchema, user, data);
         emit SafetySignalAttested(user, uid);
     }
 }
-

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
 import "../src/IncentiveMechanism.sol";
@@ -32,7 +32,9 @@ contract IncentiveMechanismTest {
         setup();
         mech.initiateContact{value: 1 ether}(address(target));
         require(address(mech).balance == 1 ether, "stake");
-        (bool ok, ) = address(mech).call{value: 1 ether}(abi.encodeWithSignature("initiateContact(address)", address(target)));
+        (bool ok, ) = address(mech).call{value: 1 ether}(
+            abi.encodeWithSignature("initiateContact(address)", address(target))
+        );
         require(!ok, "rate limit");
     }
 

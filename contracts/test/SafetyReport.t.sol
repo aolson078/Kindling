@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
 import "../src/SafetyReport.sol";
@@ -9,7 +9,11 @@ contract MockEAS {
     bytes public lastData;
     bytes32 public constant STATIC_UID = keccak256("static-uid");
 
-    function attest(bytes32 schema, address recipient, bytes calldata data) external returns (bytes32) {
+    function attest(
+        bytes32 schema,
+        address recipient,
+        bytes calldata data
+    ) external returns (bytes32) {
         lastSchema = schema;
         lastRecipient = recipient;
         lastData = data;
@@ -42,14 +46,23 @@ contract SafetyReportTest {
         SafetyReport.Report memory r = reports.getReport(0);
         require(r.reporter == address(this), "reporter");
         require(r.subject == subject, "subject");
-        require(keccak256(bytes(r.evidence)) == keccak256(bytes(cid)), "evidence");
+        require(
+            keccak256(bytes(r.evidence)) == keccak256(bytes(cid)),
+            "evidence"
+        );
         require(r.scoreChange == change, "score");
         require(r.uid == uid, "stored uid");
 
         require(reports.totalReports() == 1, "total");
         require(eas.lastRecipient() == subject, "recipient");
-        (string memory lastCid, int256 lastChange) = abi.decode(eas.lastData(), (string, int256));
-        require(keccak256(bytes(lastCid)) == keccak256(bytes(cid)), "attested cid");
+        (string memory lastCid, int256 lastChange) = abi.decode(
+            eas.lastData(),
+            (string, int256)
+        );
+        require(
+            keccak256(bytes(lastCid)) == keccak256(bytes(cid)),
+            "attested cid"
+        );
         require(lastChange == change, "attested score");
     }
 
@@ -64,9 +77,11 @@ contract SafetyReportTest {
         require(reports.totalReports() == 2, "total reports");
 
         SafetyReport.Report memory second = reports.getReport(1);
-        require(keccak256(bytes(second.evidence)) == keccak256(bytes("cid2")), "second evidence");
+        require(
+            keccak256(bytes(second.evidence)) == keccak256(bytes("cid2")),
+            "second evidence"
+        );
         require(second.scoreChange == -1, "second score");
         require(second.uid == eas.STATIC_UID(), "second uid");
     }
 }
-

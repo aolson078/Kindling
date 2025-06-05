@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
 contract IncentiveMechanism {
@@ -9,9 +9,21 @@ contract IncentiveMechanism {
     mapping(address => uint256) public lastContact;
     mapping(bytes32 => uint256) public deposits;
 
-    event ContactInitiated(address indexed initiator, address indexed target, uint256 amount);
-    event ContactRefunded(address indexed initiator, address indexed target, uint256 amount);
-    event ContactSlashed(address indexed initiator, address indexed target, uint256 amount);
+    event ContactInitiated(
+        address indexed initiator,
+        address indexed target,
+        uint256 amount
+    );
+    event ContactRefunded(
+        address indexed initiator,
+        address indexed target,
+        uint256 amount
+    );
+    event ContactSlashed(
+        address indexed initiator,
+        address indexed target,
+        uint256 amount
+    );
 
     constructor(uint256 _depositAmount, uint256 _cooldown, address _treasury) {
         depositAmount = _depositAmount;
@@ -19,13 +31,19 @@ contract IncentiveMechanism {
         treasury = _treasury;
     }
 
-    function _key(address initiator, address target) private pure returns (bytes32) {
+    function _key(
+        address initiator,
+        address target
+    ) private pure returns (bytes32) {
         return keccak256(abi.encode(initiator, target));
     }
 
     function initiateContact(address target) external payable {
         require(msg.value == depositAmount, "wrong deposit");
-        require(block.timestamp >= lastContact[msg.sender] + cooldown, "rate limited");
+        require(
+            block.timestamp >= lastContact[msg.sender] + cooldown,
+            "rate limited"
+        );
         bytes32 key = _key(msg.sender, target);
         require(deposits[key] == 0, "active deposit");
         deposits[key] = msg.value;

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
 import "../src/MatchEngine.sol";
@@ -6,7 +6,11 @@ import "../src/MatchEngine.sol";
 contract MockProfileManager is IProfileManager {
     mapping(address => Profile) public profiles;
 
-    function set(address user, string memory handle, string memory cid) external {
+    function set(
+        address user,
+        string memory handle,
+        string memory cid
+    ) external {
         profiles[user] = Profile({handle: handle, cid: cid});
     }
 
@@ -16,7 +20,11 @@ contract MockProfileManager is IProfileManager {
 }
 
 contract User {
-    function blockAddr(MatchEngine engine, address target, bool isBlocked) external {
+    function blockAddr(
+        MatchEngine engine,
+        address target,
+        bool isBlocked
+    ) external {
         engine.setBlock(target, isBlocked);
     }
 }
@@ -33,11 +41,17 @@ contract MatchEngineTest {
         ub = new User();
         pm.set(address(ua), "alice", "A");
         pm.set(address(ub), "bob", "B");
-        MatchEngine.Weights memory w = MatchEngine.Weights({profileWeight: 1, addressWeight: 1});
+        MatchEngine.Weights memory w = MatchEngine.Weights({
+            profileWeight: 1,
+            addressWeight: 1
+        });
         engine = new MatchEngine(IProfileManager(address(pm)), w);
     }
 
-    function expectedScore(address a, address b) internal view returns (uint256) {
+    function expectedScore(
+        address a,
+        address b
+    ) internal view returns (uint256) {
         string memory pa = pm.getProfile(a).cid;
         string memory pb = pm.getProfile(b).cid;
         (address a1, address a2) = a < b ? (a, b) : (b, a);
@@ -67,4 +81,3 @@ contract MatchEngineTest {
         require(result == 0, "blocked");
     }
 }
-

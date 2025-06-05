@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
 interface IEntryPoint {
@@ -18,8 +18,18 @@ contract IdentityRegistry {
 
     mapping(address => Identity) private identities;
 
-    event Registered(address indexed user, bytes32 passkeyHash, bytes32 emailHash, string metadata);
-    event MetadataUpdated(address indexed user, bytes32 passkeyHash, bytes32 emailHash, string metadata);
+    event Registered(
+        address indexed user,
+        bytes32 passkeyHash,
+        bytes32 emailHash,
+        string metadata
+    );
+    event MetadataUpdated(
+        address indexed user,
+        bytes32 passkeyHash,
+        bytes32 emailHash,
+        string metadata
+    );
     event Revoked(address indexed user);
 
     modifier onlyEntryPoint() {
@@ -48,7 +58,13 @@ contract IdentityRegistry {
         string calldata metadata
     ) external onlyEntryPoint {
         require(!identities[user].exists, "Already registered");
-        identities[user] = Identity(passkeyHash, emailHash, metadata, false, true);
+        identities[user] = Identity(
+            passkeyHash,
+            emailHash,
+            metadata,
+            false,
+            true
+        );
         emit Registered(user, passkeyHash, emailHash, metadata);
     }
 
@@ -65,7 +81,9 @@ contract IdentityRegistry {
         emit MetadataUpdated(user, passkeyHash, emailHash, metadata);
     }
 
-    function revoke(address user) external onlyEntryPoint onlyExisting(user) notRevoked(user) {
+    function revoke(
+        address user
+    ) external onlyEntryPoint onlyExisting(user) notRevoked(user) {
         identities[user].revoked = true;
         emit Revoked(user);
     }
@@ -74,4 +92,3 @@ contract IdentityRegistry {
         return identities[user];
     }
 }
-
