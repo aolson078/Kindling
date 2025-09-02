@@ -1,18 +1,77 @@
 "use client";
 
 import { useState } from "react";
+import { usePrivy } from "@privy-io/react-auth";
+import { uploadToIpfs } from "@/lib/storage";
 
 export default function NewProfilePage() {
+  const { user } = usePrivy();
   const [displayName, setDisplayName] = useState("");
   const [pronouns, setPronouns] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [cid, setCid] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const fileToBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: submit profile data
-    if (imageFile) {
-      // placeholder to avoid unused variable lint warning
+    if (!user) {
+      setError("Not authenticated");
+      return;
+    }
+    try {
+      const image = imageFile ? await fileToBase64(imageFile) : null;
+      const profile = { displayName, pronouns, ageRange, image };
+      const encoder = new TextEncoder();
+      const jsonData = encoder.encode(JSON.stringify(profile));
+
+      // derive symmetric key from user session id
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(user.id),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+      );
+      const key = await crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: encoder.encode("kindling-salt"),
+          iterations: 100000,
+          hash: "SHA-256",
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt"]
+      );
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encrypted = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        key,
+        jsonData
+      );
+
+      const payload = {
+        iv: Array.from(iv),
+        data: Array.from(new Uint8Array(encrypted)),
+      };
+      const blob = new Blob([JSON.stringify(payload)], {
+        type: "application/json",
+      });
+      const cid = await uploadToIpfs(blob);
+      setCid(cid);
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message);
     }
   };
 
@@ -80,8 +139,13 @@ export default function NewProfilePage() {
             Save profile
           </button>
         </form>
+        {cid && (
+          <div className="mt-4 break-all text-sm">Stored CID: {cid}</div>
+        )}
+        {error && (
+          <div className="mt-4 text-sm text-red-500">Error: {error}</div>
+        )}
       </section>
     </main>
   );
 }
-
