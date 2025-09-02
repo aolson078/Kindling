@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, type Wallet } from "@privy-io/react-auth";
 import { ensureSmartAccount, type SmartAccountInfo } from "@/lib/aa";
 
 export default function SmartAccountStatus() {
@@ -9,18 +9,18 @@ export default function SmartAccountStatus() {
   const [info, setInfo] = useState<SmartAccountInfo | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!ready || !authenticated) return;
-    setLoading(true);
-    (async () => {
-      const wallets = (user as any)?.linkedAccounts?.filter(
-        (a: any) => a.type === "wallet"
-      );
-      const result = await ensureSmartAccount(wallets as any);
-      setInfo(result);
-      setLoading(false);
-    })();
-  }, [ready, authenticated, user]);
+    useEffect(() => {
+      if (!ready || !authenticated) return;
+      setLoading(true);
+      (async () => {
+        const wallets = (user?.linkedAccounts ?? []).filter(
+          (a): a is Wallet => a.type === "wallet"
+        );
+        const result = await ensureSmartAccount(wallets);
+        setInfo(result);
+        setLoading(false);
+      })();
+    }, [ready, authenticated, user]);
 
   if (!ready) return <div className="text-muted">Checking wallet…</div>;
   if (!authenticated) return null;
