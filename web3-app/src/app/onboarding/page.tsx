@@ -3,18 +3,23 @@
 import { useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import SmartAccountStatus from "@/components/SmartAccountStatus";
 
 export default function OnboardingPage() {
   const { login, ready, authenticated, user } = usePrivy();
   const privyConfigured = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+  const router = useRouter();
 
   useEffect(() => {
     if (!privyConfigured) return;
-    if (ready && authenticated) {
-      // stay on this page briefly so user can see status, then redirect on back/home
-    }
-  }, [ready, authenticated, privyConfigured]);
+      if (ready && authenticated) {
+        if (!user?.profile) {
+          router.replace("/profile/new");
+        }
+        // stay on this page briefly so user can see status, then redirect on back/home
+      }
+    }, [ready, authenticated, privyConfigured, user, router]);
 
   return (
     <main className="relative min-h-screen overflow-hidden vignette noise-soft aurora-bg">
