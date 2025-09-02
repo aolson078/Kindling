@@ -13,13 +13,20 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!privyConfigured) return;
-      if (ready && authenticated) {
-        if (!user?.profile) {
+    if (ready && authenticated && user) {
+      (async () => {
+        try {
+          const res = await fetch(`/api/profile?userId=${user.id}`);
+          const data = await res.json();
+          if (!data.found) {
+            router.replace("/profile/new");
+          }
+        } catch {
           router.replace("/profile/new");
         }
-        // stay on this page briefly so user can see status, then redirect on back/home
-      }
-    }, [ready, authenticated, privyConfigured, user, router]);
+      })();
+    }
+  }, [ready, authenticated, privyConfigured, user, router]);
 
   return (
     <main className="relative min-h-screen overflow-hidden vignette noise-soft aurora-bg">
