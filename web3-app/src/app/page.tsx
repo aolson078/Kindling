@@ -1,7 +1,12 @@
 import ConstellationCanvas from "@/components/ConstellationCanvas";
 import ConnectPanel from "@/components/ConnectPanel";
 
-export default function Home() {
+export default function Home({
+  searchParams,
+}: {
+  searchParams: { profile?: string };
+}) {
+  const profileCreated = searchParams.profile === "complete";
   return (
     <main className="relative min-h-screen overflow-hidden vignette noise-soft aurora-bg">
       <section className="relative mx-auto max-w-6xl px-6 py-24 sm:py-32">
@@ -29,6 +34,11 @@ export default function Home() {
           <div className="microcopy mt-2">
             No seed phrases. No gas. Yours to own.
           </div>
+          {profileCreated && (
+            <div className="mt-6 rounded-xl bg-green-500/20 text-green-400 p-4">
+              Profile saved successfully!
+            </div>
+          )}
           <div className="mt-6 rounded-xl bg-surface/40 backdrop-blur-xl p-4 pr-5 accent-ring inline-block">
             <ConnectPanel />
           </div>

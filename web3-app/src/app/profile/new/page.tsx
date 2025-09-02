@@ -4,17 +4,17 @@ import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { uploadToIpfs } from "@/lib/storage";
 import { useAccount, useWalletClient } from "wagmi";
+import { useRouter } from "next/navigation";
 
 export default function NewProfilePage() {
   const { user } = usePrivy();
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const router = useRouter();
   const [displayName, setDisplayName] = useState("");
   const [pronouns, setPronouns] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [cid, setCid] = useState<string | null>(null);
-  const [attestationId, setAttestationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fileToBase64 = (file: File) =>
@@ -72,7 +72,6 @@ export default function NewProfilePage() {
         type: "application/json",
       });
       const cid = await uploadToIpfs(blob);
-      setCid(cid);
 
       if (!walletClient || !address) {
         throw new Error("Wallet not connected");
@@ -109,7 +108,17 @@ export default function NewProfilePage() {
         },
       });
       const newAttestationId = await tx.wait();
-      setAttestationId(newAttestationId);
+      await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          cid,
+          attestationId: newAttestationId,
+        }),
+      });
+      localStorage.setItem("profileComplete", "true");
+      router.replace("/?profile=complete");
       setError(null);
     } catch (err) {
       setError((err as Error).message);
@@ -180,14 +189,6 @@ export default function NewProfilePage() {
             Save profile
           </button>
         </form>
-        {cid && (
-          <div className="mt-4 break-all text-sm">Stored CID: {cid}</div>
-        )}
-        {attestationId && (
-          <div className="mt-4 break-all text-sm">
-            Attestation ID: {attestationId}
-          </div>
-        )}
         {error && (
           <div className="mt-4 text-sm text-red-500">Error: {error}</div>
         )}
