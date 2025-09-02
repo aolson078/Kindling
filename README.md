@@ -97,4 +97,4 @@ Kindling addresses these issues with a protocol-first design: an open-source, au
 
 ## Conclusion
 
-Kindling aims to be the foundation for a safer, fairer, and more transparent dating ecosystem. By separating protocol from app and prioritizing user love over monetization, it reimagines digital matchmaking for the Web3 era.
+Kindling aims to be the foundation for a safer, fairer, and more transparent dating ecosystem. By separating protocol from app and prioritizing user utility over monetization, it reimagines digital matchmaking for the Web3 era.
