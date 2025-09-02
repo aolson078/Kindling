@@ -3,14 +3,18 @@
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { uploadToIpfs } from "@/lib/storage";
+import { useAccount, useWalletClient } from "wagmi";
 
 export default function NewProfilePage() {
   const { user } = usePrivy();
+  const { address } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const [displayName, setDisplayName] = useState("");
   const [pronouns, setPronouns] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [cid, setCid] = useState<string | null>(null);
+  const [attestationId, setAttestationId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fileToBase64 = (file: File) =>
@@ -69,6 +73,43 @@ export default function NewProfilePage() {
       });
       const cid = await uploadToIpfs(blob);
       setCid(cid);
+
+      if (!walletClient || !address) {
+        throw new Error("Wallet not connected");
+      }
+
+      const easSdk = await import(
+        "@ethereum-attestation-service/eas-sdk"
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { EAS, SchemaEncoder } = easSdk as any;
+      const eas = new EAS(
+        process.env.NEXT_PUBLIC_EAS_CONTRACT_ADDRESS || ""
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      eas.connect(walletClient as any);
+      const schemaEncoder = new SchemaEncoder(
+        "string cid,uint64 timestamp,address user"
+      );
+      const encodedData = schemaEncoder.encodeData([
+        { name: "cid", value: cid, type: "string" },
+        {
+          name: "timestamp",
+          value: BigInt(Date.now()),
+          type: "uint64",
+        },
+        { name: "user", value: address, type: "address" },
+      ]);
+      const tx = await eas.attest({
+        schema: process.env.NEXT_PUBLIC_EAS_SCHEMA_UID || "",
+        data: {
+          recipient: address,
+          data: encodedData,
+          revocable: true,
+        },
+      });
+      const newAttestationId = await tx.wait();
+      setAttestationId(newAttestationId);
       setError(null);
     } catch (err) {
       setError((err as Error).message);
@@ -141,6 +182,11 @@ export default function NewProfilePage() {
         </form>
         {cid && (
           <div className="mt-4 break-all text-sm">Stored CID: {cid}</div>
+        )}
+        {attestationId && (
+          <div className="mt-4 break-all text-sm">
+            Attestation ID: {attestationId}
+          </div>
         )}
         {error && (
           <div className="mt-4 text-sm text-red-500">Error: {error}</div>
