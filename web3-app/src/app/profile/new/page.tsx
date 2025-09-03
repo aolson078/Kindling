@@ -15,7 +15,17 @@ export default function NewProfilePage() {
   const [pronouns, setPronouns] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState({
+    displayName: "",
+    pronouns: "",
+    ageRange: "",
+    image: "",
+  });
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState(1);
+  const totalSteps = 3;
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -24,6 +34,41 @@ export default function NewProfilePage() {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+
+  const handleDisplayNameChange = (value: string) => {
+    setDisplayName(value);
+    setFieldErrors((e) => ({
+      ...e,
+      displayName: value.trim() ? "" : "Display name is required",
+    }));
+  };
+
+  const handlePronounsChange = (value: string) => {
+    setPronouns(value);
+    setFieldErrors((e) => ({
+      ...e,
+      pronouns: value.trim() ? "" : "Pronouns are required",
+    }));
+  };
+
+  const handleAgeRangeChange = (value: string) => {
+    setAgeRange(value);
+    setFieldErrors((e) => ({
+      ...e,
+      ageRange: value.trim() ? "" : "Age range is required",
+    }));
+  };
+
+  const handleImageChange = (file: File | null) => {
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      setFieldErrors((e) => ({ ...e, image: "" }));
+    } else {
+      setImageFile(null);
+      setImagePreview(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -118,11 +163,43 @@ export default function NewProfilePage() {
         }),
       });
       localStorage.setItem("profileComplete", "true");
-      router.replace("/?profile=complete");
+      setSuccess(true);
       setError(null);
+      setTimeout(() => router.replace("/?profile=complete"), 1500);
     } catch (err) {
       setError((err as Error).message);
     }
+  };
+
+  const validateStep = () => {
+    if (step === 1) {
+      handleDisplayNameChange(displayName);
+      if (!displayName.trim()) {
+        setError("Display name is required");
+        return false;
+      }
+    }
+    if (step === 2) {
+      handlePronounsChange(pronouns);
+      handleAgeRangeChange(ageRange);
+      if (!pronouns.trim() || !ageRange.trim()) {
+        setError("Please provide pronouns and age range");
+        return false;
+      }
+    }
+    setError(null);
+    return true;
+  };
+
+  const nextStep = () => {
+    if (validateStep()) {
+      setStep((s) => Math.min(totalSteps, s + 1));
+    }
+  };
+
+  const prevStep = () => {
+    setError(null);
+    setStep((s) => Math.max(1, s - 1));
   };
 
   return (
@@ -131,66 +208,137 @@ export default function NewProfilePage() {
         <h1 className="gradient-title heading-serif text-4xl font-semibold tracking-tight">
           Create your profile
         </h1>
-        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
-          <div>
-            <label className="block text-sm" htmlFor="displayName">
-              Display name
-            </label>
-            <input
-              id="displayName"
-              name="displayName"
-              type="text"
-              required
-              className="mt-1 w-full rounded-md border border-white/10 bg-black/10 p-2"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-            />
+        <div className="mt-4 text-sm text-muted">
+          Step {step} of {totalSteps}
+        </div>
+        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
+          {step === 1 && (
+            <div>
+              <label className="block text-sm" htmlFor="displayName">
+                Display name
+              </label>
+              <input
+                id="displayName"
+                name="displayName"
+                type="text"
+                className="mt-1 w-full rounded-md border border-white/10 bg-black/10 p-2"
+                value={displayName}
+                onChange={(e) => handleDisplayNameChange(e.target.value)}
+              />
+              {fieldErrors.displayName ? (
+                <p className="mt-1 text-xs text-red-500">
+                  {fieldErrors.displayName}
+                </p>
+              ) : (
+                displayName && (
+                  <p className="mt-1 text-xs text-green-500">Looks good!</p>
+                )
+              )}
+            </div>
+          )}
+          {step === 2 && (
+            <>
+              <div>
+                <label className="block text-sm" htmlFor="pronouns">
+                  Pronouns
+                </label>
+                <input
+                  id="pronouns"
+                  name="pronouns"
+                  type="text"
+                  className="mt-1 w-full rounded-md border border-white/10 bg-black/10 p-2"
+                  value={pronouns}
+                  onChange={(e) => handlePronounsChange(e.target.value)}
+                />
+                {fieldErrors.pronouns ? (
+                  <p className="mt-1 text-xs text-red-500">
+                    {fieldErrors.pronouns}
+                  </p>
+                ) : (
+                  pronouns && (
+                    <p className="mt-1 text-xs text-green-500">Looks good!</p>
+                  )
+                )}
+              </div>
+              <div>
+                <label className="block text-sm" htmlFor="ageRange">
+                  Age range
+                </label>
+                <input
+                  id="ageRange"
+                  name="ageRange"
+                  type="text"
+                  className="mt-1 w-full rounded-md border border-white/10 bg-black/10 p-2"
+                  value={ageRange}
+                  onChange={(e) => handleAgeRangeChange(e.target.value)}
+                />
+                {fieldErrors.ageRange ? (
+                  <p className="mt-1 text-xs text-red-500">
+                    {fieldErrors.ageRange}
+                  </p>
+                ) : (
+                  ageRange && (
+                    <p className="mt-1 text-xs text-green-500">Looks good!</p>
+                  )
+                )}
+              </div>
+            </>
+          )}
+          {step === 3 && (
+            <div>
+              <label className="block text-sm" htmlFor="image">
+                Profile image
+              </label>
+              <input
+                id="image"
+                name="image"
+                type="file"
+                accept="image/*"
+                className="mt-1 w-full"
+                onChange={(e) => handleImageChange(e.target.files?.[0] || null)}
+              />
+              {imagePreview && (
+                <img
+                  src={imagePreview}
+                  alt="Profile preview"
+                  className="mt-2 h-24 w-24 rounded-full object-cover"
+                />
+              )}
+            </div>
+          )}
+          <div className="mt-4 flex gap-2">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={prevStep}
+                className="btn-ghost"
+              >
+                Back
+              </button>
+            )}
+            {step < totalSteps && (
+              <button
+                type="button"
+                onClick={nextStep}
+                className="btn-primary"
+              >
+                Next
+              </button>
+            )}
+            {step === totalSteps && (
+              <button type="submit" className="btn-primary">
+                Save profile
+              </button>
+            )}
           </div>
-          <div>
-            <label className="block text-sm" htmlFor="pronouns">
-              Pronouns
-            </label>
-            <input
-              id="pronouns"
-              name="pronouns"
-              type="text"
-              className="mt-1 w-full rounded-md border border-white/10 bg-black/10 p-2"
-              value={pronouns}
-              onChange={(e) => setPronouns(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm" htmlFor="ageRange">
-              Age range
-            </label>
-            <input
-              id="ageRange"
-              name="ageRange"
-              type="text"
-              className="mt-1 w-full rounded-md border border-white/10 bg-black/10 p-2"
-              value={ageRange}
-              onChange={(e) => setAgeRange(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm" htmlFor="image">
-              Profile image
-            </label>
-            <input
-              id="image"
-              name="image"
-              type="file"
-              accept="image/*"
-              className="mt-1 w-full"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-            />
-          </div>
-          <button type="submit" className="btn-primary mt-4">
-            Save profile
-          </button>
         </form>
         {error && (
           <div className="mt-4 text-sm text-red-500">Error: {error}</div>
+        )}
+        {success && (
+          <div className="mt-4 text-sm text-green-500">
+            Profile saved! Redirecting...
+          </div>
         )}
       </section>
     </main>
