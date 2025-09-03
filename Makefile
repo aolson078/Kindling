@@ -16,6 +16,4 @@ deploy:
 
 abi:
 	@which forge >/dev/null 2>&1 || { echo "forge not found. Install Foundry: https://book.getfoundry.sh"; exit 1; }
-	cd contracts && forge build && mkdir -p ../web3-app/abi && cp out/Counter.sol/Counter.json ../web3-app/abi/
-
-
+	cd contracts && forge build && mkdir -p ../web3-app/src/abi && cp out/Counter.sol/Counter.json out/IdentityRegistry.sol/IdentityRegistry.json out/ProfileManager.sol/ProfileManager.json out/MatchEngine.sol/MatchEngine.json out/IncentiveMechanism.sol/IncentiveMechanism.json out/SafetyReport.sol/SafetyReport.json ../web3-app/src/abi/
