@@ -7,17 +7,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useMemo } from "react";
 import { WagmiProvider } from "wagmi";
 import { wagmiConfig } from "@/lib/wagmi";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const queryClient = useMemo(() => new QueryClient(), []);
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || "";
 
   const core = (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>{children}</RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ThemeProvider>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitProvider>{children}</RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </ThemeProvider>
   );
 
   if (!appId) {

@@ -9,7 +9,7 @@ export default function Home({
   const profileCreated = searchParams.profile === "complete";
   return (
     <main className="relative min-h-screen overflow-hidden vignette noise-soft aurora-bg">
-      <section className="relative mx-auto max-w-6xl px-6 py-24 sm:py-32">
+      <section className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-32">
         <div className="absolute inset-0 -z-10">
           <ConstellationCanvas />
         </div>
@@ -23,11 +23,19 @@ export default function Home({
             soft on the eyes. Crypto-invisible when you want it; composable when
             you need it.
           </p>
-          <div className="mt-8 flex items-center gap-4">
-            <a href="#get-started" className="btn-primary">
+          <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <a
+              href="#get-started"
+              className="btn-primary w-full sm:w-auto"
+              aria-label="Jump to get started section"
+            >
               Get started
             </a>
-            <a href="#learn-more" className="btn-ghost">
+            <a
+              href="#learn-more"
+              className="btn-ghost w-full sm:w-auto"
+              aria-label="Jump to learn more section"
+            >
               Learn more
             </a>
           </div>
@@ -62,7 +70,7 @@ export default function Home({
           }}
         />
 
-        <div id="learn-more" className="mt-28 max-w-4xl">
+        <div id="learn-more" className="mt-16 sm:mt-28 max-w-4xl">
           <h2 className="text-2xl font-medium heading-serif">Why Kindling</h2>
           <p className="mt-3 text-muted">
             Replace opaque, paywalled dating with an open, community-governed
@@ -100,7 +108,7 @@ export default function Home({
           </div>
         </div>
 
-        <div id="get-started" className="mt-20 max-w-5xl">
+        <div id="get-started" className="mt-16 sm:mt-20 max-w-5xl">
           <h2 className="text-2xl font-medium heading-serif">How it works</h2>
           <div className="mt-6 rounded-2xl bg-surface/35 backdrop-blur-xl p-6 border border-white/5">
             <div className="text-muted text-sm">Architecture</div>

@@ -168,7 +168,10 @@ export default function ConstellationCanvas({
     <canvas
       ref={canvasRef}
       className="absolute inset-0 h-full w-full opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"
-      aria-hidden
-    />
+      role="img"
+      aria-label="Animated constellation background"
+    >
+      Animated constellation background
+    </canvas>
   );
 }
