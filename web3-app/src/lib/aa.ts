@@ -1,6 +1,9 @@
 import type { Wallet } from "@privy-io/react-auth";
-import { createKernelAccountClient } from "@zerodev/sdk";
-import { createPublicClient, http } from "viem";
+import {
+  createKernelAccountClient,
+  walletClientToSmartAccountSigner,
+} from "@zerodev/sdk";
+import { createWalletClient, custom, http } from "viem";
 import { sepolia } from "viem/chains";
 
 export type SmartAccountInfo = {
@@ -13,24 +16,38 @@ export async function ensureSmartAccount(
   wallets: Wallet[] | undefined
 ): Promise<SmartAccountInfo> {
   const projectId = process.env.NEXT_PUBLIC_ZERODEV_PROJECT_ID;
-  const eoa = wallets?.find((w) => w.address)?.address ?? null;
+  const wallet = wallets?.find((w) => w.address);
+  const eoa = wallet?.address ?? null;
 
-  if (!projectId) {
+  if (!projectId || !wallet) {
     return {
       eoaAddress: eoa,
       smartAccountAddress: null,
-      isReady: Boolean(eoa),
+      isReady: Boolean(eoa) && Boolean(projectId),
     };
   }
 
-  // TODO: Bridge Privy's embedded wallet to a viem-compatible owner for ZeroDev v5.
-  // Until owner wiring is added, return EOA and mark not ready to avoid build/runtime errors.
-  // This keeps the UI working while we finalize the owner adapter.
-  return { eoaAddress: eoa, smartAccountAddress: null, isReady: false };
+  try {
+    const provider = await wallet.getEthereumProvider();
+    const walletClient = createWalletClient({
+      account: eoa as `0x${string}`,
+      chain: sepolia,
+      transport: custom(provider),
+    });
+    const owner = walletClientToSmartAccountSigner(walletClient);
 
-  // Example outline once owner is available:
-  // const publicClient = createPublicClient({ chain: sepolia, transport: http() });
-  // const kernelClient = await createKernelAccountClient({ projectId, chain: sepolia, owner, transport: http(), publicClient });
-  // const saAddress = await kernelClient.getAddress();
-  // return { eoaAddress: eoa, smartAccountAddress: saAddress, isReady: true };
+    const kernelClient = await createKernelAccountClient({
+      projectId,
+      chain: sepolia,
+      owner,
+      transport: http(),
+    });
+
+    const saAddress = await kernelClient.getAddress();
+    return { eoaAddress: eoa, smartAccountAddress: saAddress, isReady: true };
+  } catch (error) {
+    console.error("ensureSmartAccount error", error);
+    return { eoaAddress: eoa, smartAccountAddress: null, isReady: false };
+  }
 }
+

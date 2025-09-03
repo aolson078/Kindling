@@ -33,9 +33,11 @@ export default function SmartAccountStatus() {
       ) : (
         <>
           <div className="mt-1">EOA: {info?.eoaAddress ?? "–"}</div>
-          <div className="mt-1">
-            Smart Account: {info?.smartAccountAddress ?? "(not set)"}
-          </div>
+          {info?.smartAccountAddress && (
+            <div className="mt-1">
+              Smart Account: {info.smartAccountAddress}
+            </div>
+          )}
           <div className="mt-1">
             Gasless ready: {info?.isReady ? "Yes" : "No"}
           </div>
