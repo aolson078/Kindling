@@ -14,7 +14,10 @@ import {SafetyReport, IEAS as IEASSafetyReport} from "../src/SafetyReport.sol";
 ///
 ///         - ENTRY_POINT: address of the ERC-4337 EntryPoint contract
 ///         - EAS: address of the Ethereum Attestation Service contract
-///         - PROFILE_SCHEMA: bytes32 schema used by ProfileManager
+///         - PROFILE_SCHEMA: bytes32 schema for profile data
+///         - PREF_SCHEMA: bytes32 schema for user preferences
+///         - VERIFY_SCHEMA: bytes32 schema for verification signals
+///         - SAFETY_SCHEMA: bytes32 schema for safety signals
 ///         - REPORT_SCHEMA: bytes32 schema used by SafetyReport
 ///         - PROFILE_WEIGHT: uint weight for profile matching
 ///         - ADDRESS_WEIGHT: uint weight for address matching
@@ -27,6 +30,9 @@ contract Deploy is Script {
         IEntryPoint entryPoint = IEntryPoint(vm.envAddress("ENTRY_POINT"));
         IEAS eas = IEAS(vm.envAddress("EAS"));
         bytes32 profileSchema = vm.envBytes32("PROFILE_SCHEMA");
+        bytes32 prefSchema = vm.envBytes32("PREF_SCHEMA");
+        bytes32 verifySchema = vm.envBytes32("VERIFY_SCHEMA");
+        bytes32 safetySchema = vm.envBytes32("SAFETY_SCHEMA");
         bytes32 reportSchema = vm.envBytes32("REPORT_SCHEMA");
         uint256 profileWeight = vm.envUint("PROFILE_WEIGHT");
         uint256 addressWeight = vm.envUint("ADDRESS_WEIGHT");
@@ -39,7 +45,13 @@ contract Deploy is Script {
         IdentityRegistry registry = new IdentityRegistry(entryPoint);
         console2.log("IdentityRegistry", address(registry));
 
-        ProfileManager profileManager = new ProfileManager(eas, profileSchema);
+        ProfileManager profileManager = new ProfileManager(
+            eas,
+            profileSchema,
+            prefSchema,
+            verifySchema,
+            safetySchema
+        );
         console2.log("ProfileManager", address(profileManager));
 
         MatchEngine.Weights memory weights = MatchEngine.Weights({

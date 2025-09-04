@@ -4,13 +4,13 @@ pragma solidity ^0.8.26;
 import "../src/MatchEngine.sol";
 
 contract MockProfileManager is IProfileManager {
-    mapping(address => string) public profiles;
+    mapping(address => Profile) public profiles;
 
-    function set(address user, string memory cid) external {
-        profiles[user] = cid;
+    function set(address user, string memory handle, string memory cid) external {
+        profiles[user] = Profile({handle: handle, cid: cid});
     }
 
-    function getProfile(address user) external view returns (string memory) {
+    function getProfile(address user) external view returns (Profile memory) {
         return profiles[user];
     }
 }
@@ -31,15 +31,15 @@ contract MatchEngineTest {
         pm = new MockProfileManager();
         ua = new User();
         ub = new User();
-        pm.set(address(ua), "A");
-        pm.set(address(ub), "B");
+        pm.set(address(ua), "alice", "A");
+        pm.set(address(ub), "bob", "B");
         MatchEngine.Weights memory w = MatchEngine.Weights({profileWeight: 1, addressWeight: 1});
         engine = new MatchEngine(IProfileManager(address(pm)), w);
     }
 
     function expectedScore(address a, address b) internal view returns (uint256) {
-        string memory pa = pm.getProfile(a);
-        string memory pb = pm.getProfile(b);
+        string memory pa = pm.getProfile(a).cid;
+        string memory pb = pm.getProfile(b).cid;
         (address a1, address a2) = a < b ? (a, b) : (b, a);
         (string memory p1, string memory p2) = a < b ? (pa, pb) : (pb, pa);
         uint256 profileHash = uint256(keccak256(abi.encodePacked(p1, p2)));
