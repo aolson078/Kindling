@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, type Wallet } from "@privy-io/react-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SmartAccountStatus from "@/components/SmartAccountStatus";
+import { ensureSmartAccount } from "@/lib/aa";
 
 export default function OnboardingPage() {
   const { login, ready, authenticated, user } = usePrivy();
@@ -15,6 +16,11 @@ export default function OnboardingPage() {
     if (!privyConfigured) return;
     if (ready && authenticated && user) {
       (async () => {
+        const wallets = (user.linkedAccounts ?? []).filter(
+          (a): a is Wallet => a.type === "wallet"
+        );
+        const info = await ensureSmartAccount(wallets);
+        if (!info.isReady) return;
         try {
           const res = await fetch(`/api/profile?userId=${user.id}`);
           const data = await res.json();

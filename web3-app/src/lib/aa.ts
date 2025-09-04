@@ -1,7 +1,10 @@
 import type { Wallet } from "@privy-io/react-auth";
 import {
   createKernelAccountClient,
+  createZeroDevPaymasterClient,
   walletClientToSmartAccountSigner,
+  type KernelAccountClient,
+  PaymasterMode,
 } from "@zerodev/sdk";
 import { createWalletClient, custom, http } from "viem";
 import { sepolia } from "viem/chains";
@@ -11,6 +14,12 @@ export type SmartAccountInfo = {
   smartAccountAddress: string | null;
   isReady: boolean;
 };
+
+let kernelClient: KernelAccountClient | null = null;
+
+export function getKernelClient() {
+  return kernelClient;
+}
 
 export async function ensureSmartAccount(
   wallets: Wallet[] | undefined
@@ -36,10 +45,19 @@ export async function ensureSmartAccount(
     });
     const owner = walletClientToSmartAccountSigner(walletClient);
 
-    const kernelClient = await createKernelAccountClient({
+    const paymaster = createZeroDevPaymasterClient({
+      projectId,
+      chain: sepolia,
+      paymasterContext: { mode: PaymasterMode.SPONSORED },
+    });
+
+    kernelClient = await createKernelAccountClient({
       projectId,
       chain: sepolia,
       owner,
+      middleware: {
+        sponsorUserOperation: paymaster.sponsorUserOperation,
+      },
       transport: http(),
     });
 
@@ -47,6 +65,7 @@ export async function ensureSmartAccount(
     return { eoaAddress: eoa, smartAccountAddress: saAddress, isReady: true };
   } catch (error) {
     console.error("ensureSmartAccount error", error);
+    kernelClient = null;
     return { eoaAddress: eoa, smartAccountAddress: null, isReady: false };
   }
 }
