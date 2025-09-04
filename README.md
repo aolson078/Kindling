@@ -59,6 +59,8 @@ Kindling addresses these issues with a protocol-first design: an open-source, au
 - IPFS/Arweave pointers for encrypted profile blobs.
 - Attestations for preferences, verification, and safety signals.
 
+The `ProfileManager` contract now stores a public handle and an IPFS CID pointing to an encrypted profile blob. Users and approved moderators can update profiles while emitting an EAS attestation. Additional helper methods issue attestations for user preferences, verification checks, and safety signals, enabling portable reputation across the protocol.
+
 ### Match Engine
 
 - Open, transparent scoring function.

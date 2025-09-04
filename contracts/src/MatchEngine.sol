@@ -2,7 +2,11 @@
 pragma solidity ^0.8.26;
 
 interface IProfileManager {
-    function getProfile(address user) external view returns (string memory);
+    struct Profile {
+        string handle;
+        string cid;
+    }
+    function getProfile(address user) external view returns (Profile memory);
 }
 
 contract MatchEngine {
@@ -51,13 +55,13 @@ contract MatchEngine {
         if (userA == userB) return 0;
         if (blocked[userA][userB] || blocked[userB][userA]) return 0;
 
-        string memory profileA = profiles.getProfile(userA);
-        string memory profileB = profiles.getProfile(userB);
+        IProfileManager.Profile memory profileA = profiles.getProfile(userA);
+        IProfileManager.Profile memory profileB = profiles.getProfile(userB);
 
         (address a1, address a2) = userA < userB ? (userA, userB) : (userB, userA);
         (string memory p1, string memory p2) = userA < userB
-            ? (profileA, profileB)
-            : (profileB, profileA);
+            ? (profileA.cid, profileB.cid)
+            : (profileB.cid, profileA.cid);
 
         uint256 profileHash = uint256(keccak256(abi.encodePacked(p1, p2)));
         uint256 addressHash = uint256(keccak256(abi.encodePacked(a1, a2)));
