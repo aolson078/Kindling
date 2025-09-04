@@ -7,14 +7,13 @@ contract MockEAS {
     bytes32 public lastSchema;
     address public lastRecipient;
     bytes public lastData;
-    bytes32 public lastUID;
+    bytes32 public constant STATIC_UID = keccak256("static-uid");
 
     function attest(bytes32 schema, address recipient, bytes calldata data) external returns (bytes32) {
         lastSchema = schema;
         lastRecipient = recipient;
         lastData = data;
-        lastUID = bytes32(uint256(lastUID) + 1);
-        return lastUID;
+        return STATIC_UID;
     }
 }
 
@@ -28,26 +27,46 @@ contract SafetyReportTest {
         reports = new SafetyReport(IEAS(address(eas)), schema);
     }
 
-    function testSubmitReport() public {
+    function testSubmitAndRetrieveReport() public {
         setup();
-        address user = address(0xBEEF);
-        bytes32 uid = reports.submitReport(user, "encryptedCID", 1);
-        int256 rep = reports.getReputation(user);
-        require(rep == 1, "reputation");
-        require(eas.lastRecipient() == user, "recipient");
-        (string memory cid, int256 change) = abi.decode(eas.lastData(), (string, int256));
-        require(keccak256(bytes(cid)) == keccak256(bytes("encryptedCID")), "cid");
-        require(change == 1, "change");
-        require(uid == eas.lastUID(), "uid");
+        address subject = address(0xBEEF);
+        string memory cid = "encryptedCID";
+        int256 change = 1;
+
+        bytes32 uid = reports.submitReport(subject, cid, change);
+        require(uid == eas.STATIC_UID(), "uid");
+
+        int256 rep = reports.getReputation(subject);
+        require(rep == change, "reputation");
+
+        SafetyReport.Report memory r = reports.getReport(0);
+        require(r.reporter == address(this), "reporter");
+        require(r.subject == subject, "subject");
+        require(keccak256(bytes(r.evidence)) == keccak256(bytes(cid)), "evidence");
+        require(r.scoreChange == change, "score");
+        require(r.uid == uid, "stored uid");
+
+        require(reports.totalReports() == 1, "total");
+        require(eas.lastRecipient() == subject, "recipient");
+        (string memory lastCid, int256 lastChange) = abi.decode(eas.lastData(), (string, int256));
+        require(keccak256(bytes(lastCid)) == keccak256(bytes(cid)), "attested cid");
+        require(lastChange == change, "attested score");
     }
 
-    function testMultipleReportsAdjustReputation() public {
+    function testMultipleReportsAdjustReputationAndStorage() public {
         setup();
-        address user = address(0xBEEF);
-        reports.submitReport(user, "cid1", 2);
-        reports.submitReport(user, "cid2", -1);
-        int256 rep = reports.getReputation(user);
+        address subject = address(0xBEEF);
+        reports.submitReport(subject, "cid1", 2);
+        reports.submitReport(subject, "cid2", -1);
+
+        int256 rep = reports.getReputation(subject);
         require(rep == 1, "sum");
+        require(reports.totalReports() == 2, "total reports");
+
+        SafetyReport.Report memory second = reports.getReport(1);
+        require(keccak256(bytes(second.evidence)) == keccak256(bytes("cid2")), "second evidence");
+        require(second.scoreChange == -1, "second score");
+        require(second.uid == eas.STATIC_UID(), "second uid");
     }
 }
 
