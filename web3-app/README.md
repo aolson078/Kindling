@@ -6,6 +6,8 @@ Env setup:
 
 ```
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_here
+NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id
+NEXT_PUBLIC_ZERODEV_PROJECT_ID=your_zerodev_project_id
 ```
 
 Run the development server:
