@@ -25,38 +25,56 @@ import {SafetyReport, IEAS as IEASSafetyReport} from "../src/SafetyReport.sol";
 ///         - COOLDOWN: uint cooldown in seconds for IncentiveMechanism
 ///         - TREASURY: address receiving slashed deposits
 contract Deploy is Script {
+    struct DeploymentConfig {
+        IEntryPoint entryPoint;
+        IEAS eas;
+        bytes32 profileSchema;
+        bytes32 prefSchema;
+        bytes32 verifySchema;
+        bytes32 safetySchema;
+        bytes32 reportSchema;
+        uint256 profileWeight;
+        uint256 addressWeight;
+        uint256 depositAmount;
+        uint256 cooldown;
+        address treasury;
+    }
+
+    function loadConfig() internal view returns (DeploymentConfig memory cfg) {
+        cfg.entryPoint = IEntryPoint(vm.envAddress("ENTRY_POINT"));
+        cfg.eas = IEAS(vm.envAddress("EAS"));
+        cfg.profileSchema = vm.envBytes32("PROFILE_SCHEMA");
+        cfg.prefSchema = vm.envBytes32("PREF_SCHEMA");
+        cfg.verifySchema = vm.envBytes32("VERIFY_SCHEMA");
+        cfg.safetySchema = vm.envBytes32("SAFETY_SCHEMA");
+        cfg.reportSchema = vm.envBytes32("REPORT_SCHEMA");
+        cfg.profileWeight = vm.envUint("PROFILE_WEIGHT");
+        cfg.addressWeight = vm.envUint("ADDRESS_WEIGHT");
+        cfg.depositAmount = vm.envUint("DEPOSIT_AMOUNT");
+        cfg.cooldown = vm.envUint("COOLDOWN");
+        cfg.treasury = vm.envAddress("TREASURY");
+    }
+
     function run() external {
-        // Read shared configuration
-        IEntryPoint entryPoint = IEntryPoint(vm.envAddress("ENTRY_POINT"));
-        IEAS eas = IEAS(vm.envAddress("EAS"));
-        bytes32 profileSchema = vm.envBytes32("PROFILE_SCHEMA");
-        bytes32 prefSchema = vm.envBytes32("PREF_SCHEMA");
-        bytes32 verifySchema = vm.envBytes32("VERIFY_SCHEMA");
-        bytes32 safetySchema = vm.envBytes32("SAFETY_SCHEMA");
-        bytes32 reportSchema = vm.envBytes32("REPORT_SCHEMA");
-        uint256 profileWeight = vm.envUint("PROFILE_WEIGHT");
-        uint256 addressWeight = vm.envUint("ADDRESS_WEIGHT");
-        uint256 depositAmount = vm.envUint("DEPOSIT_AMOUNT");
-        uint256 cooldown = vm.envUint("COOLDOWN");
-        address treasury = vm.envAddress("TREASURY");
+        DeploymentConfig memory cfg = loadConfig();
 
         vm.startBroadcast();
 
-        IdentityRegistry registry = new IdentityRegistry(entryPoint);
+        IdentityRegistry registry = new IdentityRegistry(cfg.entryPoint);
         console2.log("IdentityRegistry", address(registry));
 
         ProfileManager profileManager = new ProfileManager(
-            eas,
-            profileSchema,
-            prefSchema,
-            verifySchema,
-            safetySchema
+            cfg.eas,
+            cfg.profileSchema,
+            cfg.prefSchema,
+            cfg.verifySchema,
+            cfg.safetySchema
         );
         console2.log("ProfileManager", address(profileManager));
 
         MatchEngine.Weights memory weights = MatchEngine.Weights({
-            profileWeight: profileWeight,
-            addressWeight: addressWeight
+            profileWeight: cfg.profileWeight,
+            addressWeight: cfg.addressWeight
         });
         MatchEngine matchEngine = new MatchEngine(
             IProfileManager(address(profileManager)),
@@ -65,15 +83,15 @@ contract Deploy is Script {
         console2.log("MatchEngine", address(matchEngine));
 
         IncentiveMechanism incentiveMechanism = new IncentiveMechanism(
-            depositAmount,
-            cooldown,
-            treasury
+            cfg.depositAmount,
+            cfg.cooldown,
+            cfg.treasury
         );
         console2.log("IncentiveMechanism", address(incentiveMechanism));
 
         SafetyReport safetyReport = new SafetyReport(
-            IEASSafetyReport(address(eas)),
-            reportSchema
+            IEASSafetyReport(address(cfg.eas)),
+            cfg.reportSchema
         );
         console2.log("SafetyReport", address(safetyReport));
 
