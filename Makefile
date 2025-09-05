@@ -7,13 +7,17 @@ anvil:
 	anvil
 
 build:
-	@which forge >/dev/null 2>&1 || { echo "forge not found. Install Foundry: https://book.getfoundry.sh"; exit 1; }
-	cd contracts && forge build
+	cd contracts && npm run compile
 
 deploy:
-	@which forge >/dev/null 2>&1 || { echo "forge not found. Install Foundry: https://book.getfoundry.sh"; exit 1; }
-	cd contracts && forge script script/Deploy.s.sol --broadcast --rpc-url http://localhost:8545
+	cd contracts && npm run deploy
 
 abi:
-	@which forge >/dev/null 2>&1 || { echo "forge not found. Install Foundry: https://book.getfoundry.sh"; exit 1; }
-	cd contracts && forge build && mkdir -p ../web3-app/src/abi && cp out/Counter.sol/Counter.json out/IdentityRegistry.sol/IdentityRegistry.json out/ProfileManager.sol/ProfileManager.json out/MatchEngine.sol/MatchEngine.json out/IncentiveMechanism.sol/IncentiveMechanism.json out/SafetyReport.sol/SafetyReport.json ../web3-app/src/abi/
+	cd contracts && npm run compile && mkdir -p ../web3-app/src/abi && \
+	  cp artifacts/src/Counter.sol/Counter.json \
+	     artifacts/src/IdentityRegistry.sol/IdentityRegistry.json \
+	     artifacts/src/ProfileManager.sol/ProfileManager.json \
+	     artifacts/src/MatchEngine.sol/MatchEngine.json \
+	     artifacts/src/IncentiveMechanism.sol/IncentiveMechanism.json \
+	     artifacts/src/SafetyReport.sol/SafetyReport.json \
+	     ../web3-app/src/abi/
