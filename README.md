@@ -89,6 +89,33 @@ The `ProfileManager` contract now stores a public handle and an IPFS CID pointin
        → Incentives & Moderation
 ```
 
+## Rendezvous receipts & safety reports
+
+- `RendezvousReceipt` accepts Semaphore-style proofs of co-location. When
+  `submitReceipt` succeeds it mints an EAS attestation whose UID is later
+  consumed by `SafetyReport`.
+- View helpers surface the computed signal and external nullifier so the dApp
+  can build witnesses and verify counterparty participation without revealing
+  the underlying location or timestamp.
+- `SafetyReport` now requires a rendezvous receipt UID before applying positive
+  reputation changes. Negative or neutral reports still land without a proof,
+  but are tagged as unverified.
+- The Next.js flow under `/rendezvous` walks both parties through exchanging
+  Bluetooth/location secrets, builds the Groth16 witness client-side, and posts
+  it to `submitReceipt`. Export `NEXT_PUBLIC_RENDEZVOUS_RECEIPT_ADDRESS` to the
+  deployed contract address to enable on-chain submissions.
+- After a receipt is confirmed, the reporter submits their encrypted evidence
+  and reputation delta via `SafetyReport.submitReport(subject, evidence, score,
+  receiptUid)`. Helper views `getReportsFor`, `getReportsByReporter`, and
+  `canSubmitPositive` make it easy for clients to pre-flight UI decisions.
+
+Run the end-to-end integration test from the contracts workspace:
+
+```bash
+cd contracts
+forge test --match-test testReceiptThenReportAdjustsReputation
+```
+
 ## Roadmap
 
 1. RFC-0001: Protocol Overview
