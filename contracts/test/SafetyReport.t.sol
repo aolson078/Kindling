@@ -2,86 +2,167 @@
 pragma solidity ^0.8.26;
 
 import "../src/SafetyReport.sol";
-
-contract MockEAS {
-    bytes32 public lastSchema;
-    address public lastRecipient;
-    bytes public lastData;
-    bytes32 public constant STATIC_UID = keccak256("static-uid");
-
-    function attest(
-        bytes32 schema,
-        address recipient,
-        bytes calldata data
-    ) external returns (bytes32) {
-        lastSchema = schema;
-        lastRecipient = recipient;
-        lastData = data;
-        return STATIC_UID;
-    }
-}
+import "../src/RendezvousReceipt.sol";
+import "./mocks/MockEAS.sol";
+import "./mocks/MockVerifier.sol";
 
 contract SafetyReportTest {
     MockEAS private eas;
+    MockSemaphoreVerifier private verifier;
+    RendezvousReceipt private receipts;
     SafetyReport private reports;
     bytes32 private schema = keccak256("report");
+    bytes32 private receiptSchema = keccak256("rendezvous");
 
     function setup() internal {
         eas = new MockEAS();
-        reports = new SafetyReport(IEAS(address(eas)), schema);
+        verifier = new MockSemaphoreVerifier();
+        receipts = new RendezvousReceipt(
+            IEAS(address(eas)),
+            ISemaphoreVerifier(address(verifier)),
+            receiptSchema
+        );
+        reports = new SafetyReport(
+            IEAS(address(eas)),
+            schema,
+            receipts
+        );
     }
 
-    function testSubmitAndRetrieveReport() public {
+    function prepareReceipt(
+        address subject,
+        bytes32 sessionId,
+        bytes32 locationCommitment,
+        uint256 timeSlot,
+        uint256 merkleRoot,
+        uint256 nullifierHash,
+        string memory memo
+    ) internal returns (bytes32) {
+        uint256 signal = receipts.computeSignal(
+            address(this),
+            subject,
+            sessionId,
+            locationCommitment,
+            timeSlot
+        );
+        uint256 externalNullifier = receipts.computeExternalNullifier(
+            sessionId,
+            timeSlot
+        );
+        verifier.setExpectation(signal, externalNullifier);
+        uint256[8] memory proof;
+        return
+            receipts.submitReceipt(
+                subject,
+                sessionId,
+                locationCommitment,
+                timeSlot,
+                memo,
+                merkleRoot,
+                nullifierHash,
+                proof
+            );
+    }
+
+    function testPositiveReportRequiresReceiptAndRewards() public {
         setup();
         address subject = address(0xBEEF);
-        string memory cid = "encryptedCID";
-        int256 change = 1;
+        bytes32 sessionId = keccak256("session");
+        bytes32 locationCommitment = keccak256("cafe");
+        uint256 timeSlot = 42;
+        bytes32 receiptUid = prepareReceipt(
+            subject,
+            sessionId,
+            locationCommitment,
+            timeSlot,
+            123,
+            456,
+            "Coffee"
+        );
 
-        bytes32 uid = reports.submitReport(subject, cid, change);
+        bytes32 uid = reports.submitReport(subject, "evidence", 5, receiptUid);
         require(uid == eas.STATIC_UID(), "uid");
 
         int256 rep = reports.getReputation(subject);
-        require(rep == change, "reputation");
+        require(rep == 5, "reputation");
 
-        SafetyReport.Report memory r = reports.getReport(0);
-        require(r.reporter == address(this), "reporter");
-        require(r.subject == subject, "subject");
-        require(
-            keccak256(bytes(r.evidence)) == keccak256(bytes(cid)),
-            "evidence"
-        );
-        require(r.scoreChange == change, "score");
-        require(r.uid == uid, "stored uid");
+        SafetyReport.Report memory stored = reports.getReport(0);
+        require(stored.reporter == address(this), "reporter");
+        require(stored.subject == subject, "subject");
+        require(stored.scoreChange == 5, "score");
+        require(stored.receiptUid == receiptUid, "receipt");
+        require(stored.receiptVerified, "verified");
 
-        require(reports.totalReports() == 1, "total");
-        require(eas.lastRecipient() == subject, "recipient");
-        (string memory lastCid, int256 lastChange) = abi.decode(
-            eas.lastData(),
-            (string, int256)
+        bool canSubmit = reports.canSubmitPositive(
+            address(this),
+            subject,
+            receiptUid
         );
-        require(
-            keccak256(bytes(lastCid)) == keccak256(bytes(cid)),
-            "attested cid"
-        );
-        require(lastChange == change, "attested score");
+        require(canSubmit, "helper");
     }
 
-    function testMultipleReportsAdjustReputationAndStorage() public {
+    function testPositiveReportWithoutReceiptReverts() public {
         setup();
         address subject = address(0xBEEF);
-        reports.submitReport(subject, "cid1", 2);
-        reports.submitReport(subject, "cid2", -1);
+        bool reverted;
+        try reports.submitReport(subject, "cid", 1, bytes32(0)) returns (bytes32) {
+            revert("should revert");
+        } catch {
+            reverted = true;
+        }
+        require(reverted, "expected revert");
+    }
+
+    function testNegativeReportDoesNotRequireReceipt() public {
+        setup();
+        address subject = address(0xBEEF);
+        bytes32 uid = reports.submitReport(subject, "cid", -2, bytes32(0));
+        require(uid == eas.STATIC_UID(), "uid");
 
         int256 rep = reports.getReputation(subject);
-        require(rep == 1, "sum");
-        require(reports.totalReports() == 2, "total reports");
+        require(rep == -2, "negative rep");
 
-        SafetyReport.Report memory second = reports.getReport(1);
-        require(
-            keccak256(bytes(second.evidence)) == keccak256(bytes("cid2")),
-            "second evidence"
+        SafetyReport.Report memory stored = reports.getReport(0);
+        require(!stored.receiptVerified, "receipt flag");
+        require(stored.receiptUid == bytes32(0), "receipt uid");
+
+        SafetyReport.Report[] memory subjectReports = reports.getReportsFor(subject);
+        require(subjectReports.length == 1, "subject filter");
+        require(subjectReports[0].scoreChange == -2, "subject entry");
+
+        SafetyReport.Report[] memory reporterReports = reports.getReportsByReporter(
+            address(this)
         );
-        require(second.scoreChange == -1, "second score");
-        require(second.uid == eas.STATIC_UID(), "second uid");
+        require(reporterReports.length == 1, "reporter filter");
+        require(reporterReports[0].scoreChange == -2, "reporter entry");
+    }
+
+    function testHelperRejectsMismatchedReceipt() public {
+        setup();
+        address subject = address(0xBEEF);
+        bytes32 sessionId = keccak256("session");
+        bytes32 locationCommitment = keccak256("cafe");
+        uint256 timeSlot = 42;
+        bytes32 receiptUid = prepareReceipt(
+            subject,
+            sessionId,
+            locationCommitment,
+            timeSlot,
+            999,
+            1000,
+            "Tea"
+        );
+
+        bool otherCanSubmit = reports.canSubmitPositive(
+            address(0x1234),
+            subject,
+            receiptUid
+        );
+        require(!otherCanSubmit, "unexpected helper");
+
+        SafetyReport.Report[] memory none = reports.getReportsByReporter(
+            address(0x1234)
+        );
+        require(none.length == 0, "no reports yet");
     }
 }
