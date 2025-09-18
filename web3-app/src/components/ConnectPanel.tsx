@@ -1,13 +1,15 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useBalance, useNetwork } from "wagmi";
+import { useAccount, useBalance, useChainId, useConfig } from "wagmi";
 import { mainnet } from "wagmi/chains";
 import { useState } from "react";
 
 export default function ConnectPanel() {
   const { address, isConnected } = useAccount();
-  const { chain } = useNetwork();
+  const chainId = useChainId();
+  const { chains } = useConfig();
+  const chain = chains.find((c) => c.id === chainId);
   const { data: balance } = useBalance({
     chainId: mainnet.id,
     address,
@@ -63,5 +65,3 @@ export default function ConnectPanel() {
     </div>
   );
 }
-
-
