@@ -198,6 +198,11 @@ body.reduce-motion *::after {
   padding: 4rem 1.25rem;
 }
 
+.changelog-section {
+  display: grid;
+  gap: 3rem;
+}
+
 @media (min-width: 640px) {
   .section-shell { padding: 5.5rem 2.5rem; }
 }
@@ -365,6 +370,78 @@ body.reduce-motion *::after {
 .feature-card__meta {
   font-size: 0.8rem;
   color: color-mix(in srgb, var(--muted) 80%, white 20%);
+}
+
+.changelog-grid {
+  display: grid;
+  gap: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .changelog-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
+.changelog-card {
+  position: relative;
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(circle at top left, rgba(110, 86, 207, 0.22), transparent 55%),
+    color-mix(in srgb, var(--surface) 74%, rgba(18, 14, 31, 0.65));
+  border: 1px solid rgba(231, 227, 255, 0.1);
+  box-shadow: 0 18px 38px rgba(9, 6, 22, 0.35);
+}
+
+.changelog-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(231, 227, 255, 0.16);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.changelog-card:hover::after {
+  opacity: 1;
+}
+
+.changelog-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.changelog-card__version {
+  font-size: 0.75rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted) 70%, white 30%);
+}
+
+.changelog-card__codename {
+  margin-top: 0.4rem;
+  font-size: 1.25rem;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.changelog-card__date {
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted) 78%, white 22%);
+}
+
+.changelog-card__list {
+  gap: 0.65rem;
 }
 
 .list-check,
