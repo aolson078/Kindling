@@ -124,6 +124,45 @@ const upgradeStats = [
   },
 ];
 
+const upgradeChangelog = [
+  {
+    version: "2025.02",
+    codename: "Aurora mainline",
+    date: "Feb 2025",
+    status: "Live",
+    statusVariant: "ok",
+    highlights: [
+      "Protocol upgrade shipped with rendezvous receipts gating positive reputation.",
+      "Smart account onboarding upgraded with passkey-first Privy + ZeroDev flows.",
+      "Matching engine migrated to deterministic, on-chain governed weights.",
+    ],
+  },
+  {
+    version: "2024.12",
+    codename: "Sentry preview",
+    date: "Dec 2024",
+    status: "In review",
+    statusVariant: "info",
+    highlights: [
+      "Moderator console released for curated guardians with encrypted evidence review.",
+      "Introduced appeals queue with cooldown timers to prevent retaliatory reports.",
+      "Safety attestations now portable across ecosystem clients via shared schemas.",
+    ],
+  },
+  {
+    version: "2024.09",
+    codename: "Beacon cutover",
+    date: "Sep 2024",
+    status: "Research",
+    statusVariant: "warn",
+    highlights: [
+      "Experimenting with refundable intent stakes to discourage spam matchmaking.",
+      "Collecting analytics for match feedback loops and weighted scoring curves.",
+      "Designing privacy-preserving liveness attestations for optional verification.",
+    ],
+  },
+];
+
 type HomeSearchParams = { profile?: string };
 
 export default async function Home({
@@ -231,6 +270,36 @@ export default async function Home({
               <h3 className="heading-serif text-xl font-medium">{feature.title}</h3>
               <p className="text-sm text-soft leading-relaxed">{feature.description}</p>
               <p className="feature-card__meta">{feature.detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="changelog" className="section-shell changelog-section">
+        <header className="max-w-3xl space-y-4">
+          <h2 className="heading-serif text-3xl font-semibold">Upgrade changelog</h2>
+          <p className="text-muted text-base sm:text-lg">
+            Track how the protocol hardened over time—from early research cuts to today&apos;s live Aurora mainline release.
+          </p>
+        </header>
+        <div className="changelog-grid mt-10">
+          {upgradeChangelog.map((entry) => (
+            <article key={entry.version} className="changelog-card">
+              <header className="changelog-card__header">
+                <div>
+                  <p className="changelog-card__version">{entry.version}</p>
+                  <p className="changelog-card__codename">{entry.codename}</p>
+                </div>
+                <span className={`status-pill status-pill--${entry.statusVariant}`}>
+                  {entry.status}
+                </span>
+              </header>
+              <p className="changelog-card__date">{entry.date}</p>
+              <ul className="list-check changelog-card__list">
+                {entry.highlights.map((highlight) => (
+                  <li key={highlight}>{highlight}</li>
+                ))}
+              </ul>
             </article>
           ))}
         </div>
