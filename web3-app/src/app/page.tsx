@@ -2,10 +2,33 @@ import Link from "next/link";
 import ConstellationCanvas from "@/components/ConstellationCanvas";
 import ConnectPanel from "@/components/ConnectPanel";
 
+const navLinks = [
+  { href: "#learn-more", label: "Highlights" },
+  { href: "#signals", label: "Signals" },
+  { href: "#changelog", label: "Changelog" },
+  { href: "#get-started", label: "Get started" },
+  { href: "#faq", label: "FAQ" },
+];
+
 const heroBullets = [
   "Transparent, attestable reputation with Rendezvous receipts gating positive signal.",
   "Passkey-first onboarding that quietly deploys a smart account and sponsors gas.",
   "Composable matchmaking rails that any community client can remix.",
+];
+
+const heroHighlights = [
+  {
+    title: "Composable rails",
+    description: "SDK primitives for intents, scoring, and rendezvous flows that every client can extend.",
+  },
+  {
+    title: "Safety-forward",
+    description: "Receipts, moderation attestations, and encrypted evidence pipelines by default.",
+  },
+  {
+    title: "Gasless onboarding",
+    description: "Passkey-first accounts with sponsored actions so newcomers never touch a seed phrase.",
+  },
 ];
 
 const featureHighlights = [
@@ -90,6 +113,33 @@ const guardrails = [
   "Opt-in privacy layers so sensitive evidence never hits the public chain.",
 ];
 
+const ecosystemSignals = [
+  {
+    label: "Active rendezvous",
+    value: "8,120",
+    change: "+32% month over month",
+    tone: "ok",
+  },
+  {
+    label: "Verified guardians",
+    value: "142",
+    change: "+18 onboarded this quarter",
+    tone: "info",
+  },
+  {
+    label: "Attestations issued",
+    value: "54,300",
+    change: "+4.7k past 7 days",
+    tone: "ok",
+  },
+  {
+    label: "Escalations resolved",
+    value: "98%",
+    change: "Under 36h median response",
+    tone: "warn",
+  },
+];
+
 const roadmap = [
   {
     label: "Shipping now",
@@ -163,6 +213,29 @@ const upgradeChangelog = [
   },
 ];
 
+const faqEntries = [
+  {
+    question: "How do sponsored actions stay sustainable?",
+    answer:
+      "We route onboarding transactions through rotating paymasters funded by DAO-set budgets. Guardians vote on the budget each epoch while analytics flag abusive usage for throttling.",
+  },
+  {
+    question: "Can communities run their own scoring curves?",
+    answer:
+      "Yes. The deterministic weights ship as governance-controlled parameters. Any community client can fork the template contract, adjust multipliers, and publish their configuration as an attestation.",
+  },
+  {
+    question: "What happens if a guardian issues a false report?",
+    answer:
+      "Appeals queue cases require multi-guardian quorum. Every moderation action emits an attestation that can be challenged, with cooldown periods that prevent instant retaliatory adjustments.",
+  },
+  {
+    question: "Where are encrypted profiles stored?",
+    answer:
+      "Profile blobs live on IPFS using access-controlled encryption. The smart account only references the CID, while Privy controls who can decrypt based on user consent and guardian policies.",
+  },
+];
+
 type HomeSearchParams = { profile?: string };
 
 export default async function Home({
@@ -178,7 +251,35 @@ export default async function Home({
   const profileCreated = resolvedSearchParams?.profile === "complete";
 
   return (
-    <main className="relative min-h-screen overflow-hidden vignette noise-soft aurora-bg">
+    <main
+      id="top"
+      className="relative min-h-screen overflow-hidden vignette noise-soft aurora-bg"
+    >
+      <header className="site-header" aria-label="Primary">
+        <Link href="#top" className="logo-lockup" aria-label="Kindling protocol home">
+          <span className="logo-glow" aria-hidden />
+          <span className="logo-word">Kindling</span>
+          <span className="logo-tag">Protocol</span>
+        </Link>
+        <nav className="nav-links" aria-label="Jump to section">
+          {navLinks.map((item) => (
+            <Link key={item.href} href={item.href} className="nav-link">
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="nav-actions">
+          <span className="status-pill status-pill--info nav-status">Beta cohort live</span>
+          <a
+            href="mailto:hello@kindling.xyz"
+            className="nav-cta"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Request invite
+          </a>
+        </div>
+      </header>
       <section className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-28">
         <div className="absolute inset-0 -z-10">
           <ConstellationCanvas density={0.00075} />
@@ -218,6 +319,14 @@ export default async function Home({
                 <li key={bullet}>{bullet}</li>
               ))}
             </ul>
+            <div className="hero-highlight-grid">
+              {heroHighlights.map((item) => (
+                <div key={item.title} className="hero-highlight-card">
+                  <h3 className="text-sm uppercase tracking-[0.18em] text-muted">{item.title}</h3>
+                  <p className="text-sm text-soft leading-relaxed">{item.description}</p>
+                </div>
+              ))}
+            </div>
             <div className="microcopy">No seed phrases. No gas. Yours to own.</div>
             {profileCreated && (
               <div className="upgrade-alert" role="status">
@@ -253,6 +362,27 @@ export default async function Home({
               </div>
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section id="signals" className="section-shell section-shell--compact">
+        <div className="section-intro">
+          <h2 className="heading-serif text-3xl font-semibold">Network signals</h2>
+          <p className="text-muted text-base sm:text-lg">
+            Community-owned analytics surface the pulse of the protocol without exposing personal context.
+          </p>
+        </div>
+        <div className="signal-grid">
+          {ecosystemSignals.map((signal) => (
+            <article key={signal.label} className={`signal-card signal-card--${signal.tone}`}>
+              <p className="signal-label">
+                <span className="signal-dot" aria-hidden />
+                {signal.label}
+              </p>
+              <p className="signal-metric heading-serif">{signal.value}</p>
+              <p className="signal-delta">{signal.change}</p>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -353,6 +483,25 @@ export default async function Home({
               </ul>
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section id="faq" className="section-shell faq-section">
+        <header className="max-w-3xl space-y-4">
+          <h2 className="heading-serif text-3xl font-semibold">FAQ &amp; playbook</h2>
+          <p className="text-muted text-base sm:text-lg">
+            Quick answers for operators rolling out the upgrade across their communities.
+          </p>
+        </header>
+        <div className="faq-grid">
+          {faqEntries.map((entry) => (
+            <details key={entry.question} className="faq-item">
+              <summary>
+                <span>{entry.question}</span>
+              </summary>
+              <p>{entry.answer}</p>
+            </details>
+          ))}
         </div>
       </section>
     </main>
