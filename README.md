@@ -89,6 +89,15 @@ The `ProfileManager` contract now stores a public handle and an IPFS CID pointin
        → Incentives & Moderation
 ```
 
+## Repository Structure
+
+- `contracts/`: Foundry workspace containing the smart contracts, deployment
+  scripts, and integration tests for the protocol primitives.
+- `web3-app/`: Next.js reference client that exercises the protocol and
+  showcases the crypto-invisible onboarding experience.
+- `Makefile`: Convenience targets for linting, testing, and running the
+  end-to-end workflow across both workspaces.
+
 ## Rendezvous receipts & safety reports
 
 - `RendezvousReceipt` accepts Semaphore-style proofs of co-location. When
